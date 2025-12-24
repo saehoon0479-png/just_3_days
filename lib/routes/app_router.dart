@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
-import '../domain/challenge/challenge_controller.dart';
-import '../domain/challenge/challenge_state.dart';
+import '../ui/screens/splash_intro_screen.dart';
 import '../ui/screens/s1_goal_setup_screen.dart';
 
 class AppRouter {
-  static const s1 = '/s1';
+  static const String splash = '/';
+  static const String s1 = '/s1';
 
-  static String initialRouteFor(ChallengeState state) {
-    return s1;
-  }
-
-  static Route<dynamic> onGenerateRoute({
-    required RouteSettings settings,
-    required ChallengeController controller,
-  }) {
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case splash:
+        return MaterialPageRoute(
+          builder: (_) => const SplashIntroScreen(),
+          settings: settings,
+        );
       case s1:
       default:
         return MaterialPageRoute(
-          builder: (_) => S1GoalSetupScreen(controller: controller),
+          builder: (_) => const S1GoalSetupScreen(),
+          settings: settings,
         );
     }
   }

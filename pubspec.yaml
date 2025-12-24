@@ -30,6 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+    
+  get: ^4.6.6
+  get_storage: ^2.1.1
+
 
   shared_preferences: ^2.3.2
   google_fonts: ^6.2.1

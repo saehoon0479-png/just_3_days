@@ -1,200 +1,172 @@
 import 'package:flutter/material.dart';
-import '../../core/spec_constants.dart';
-import '../../core/spec_copy.dart';
+import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
+
+
 import '../../domain/challenge/challenge_controller.dart';
 import '../widgets/jelly_tap.dart';
 
-class S1GoalSetupScreen extends StatefulWidget {
-  final ChallengeController controller;
-  const S1GoalSetupScreen({super.key, required this.controller});
+class S1GoalSetupScreen extends StatelessWidget {
+  const S1GoalSetupScreen({super.key});
 
-  @override
-  State<S1GoalSetupScreen> createState() => _S1GoalSetupScreenState();
-}
-
-class _S1GoalSetupScreenState extends State<S1GoalSetupScreen> {
-  final _goalCtrl = TextEditingController();
-  String _durationText = Copy.t10;
-
-  @override
-  void dispose() {
-    _goalCtrl.dispose();
-    super.dispose();
-  }
-
-  void _setTemplate(String goal) {
-    setState(() => _goalCtrl.text = goal);
-  }
-
-  Future<void> _start() async {
-    final goal = _goalCtrl.text.trim();
-    if (goal.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('목표를 입력해줘')),
-      );
-      return;
-    }
-
-    // 지금 단계: 저장까지만 하고 다음 단계(S2) 연결은 다음 턴에서 추가
-    await widget.controller.startChallenge(goal: goal, durationText: _durationText);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('저장 완료 ✅ 다음 단계에서 S2로 연결할게')),
-    );
-  }
+  static const _bg = Color(0xFFFFFDD0);     // 크림
+  static const _primary = Color(0xFFFCE205); // 개나리
+  static const _text = Color(0xFF333333);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(SpecConst.pad),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(Copy.s1Header, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 14),
+    final c = Get.put(ChallengeController());
 
-              // 템플릿 버튼(물/책/운동)
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _Chip(text: Copy.templateWater, onTap: () => _setTemplate(Copy.templateWater)),
-                  _Chip(text: Copy.templateBook, onTap: () => _setTemplate(Copy.templateBook)),
-                  _Chip(text: Copy.templateWorkout, onTap: () => _setTemplate(Copy.templateWorkout)),
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: _bg,
+        elevation: 0,
+        title: const Text('딱 3일만', style: TextStyle(color: _text, fontWeight: FontWeight.w800)),
+        centerTitle: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _RoundCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('MVP', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _text)),
+                  SizedBox(height: 6),
+                  Text('1) 시작하기\n2) 오늘 성공\n(필요하면 초기화)',
+                      style: TextStyle(color: _text, height: 1.25)),
                 ],
               ),
+            ),
+            const SizedBox(height: 12),
 
-              const SizedBox(height: 14),
-
-              // 입력 카드
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(SpecConst.pad),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(SpecConst.radius),
-                  border: Border.all(color: Colors.black.withOpacity(0.06)),
-                ),
+            // 상태 표시
+            Obx(() {
+              return _RoundCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
-                      controller: _goalCtrl,
-                      style: Theme.of(context).textTheme.titleMedium,
-                      decoration: const InputDecoration(
-                        hintText: Copy.hintGoal,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      Copy.intensityLabel,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 10,
-                      children: [
-                        _DurationChoice(
-                          text: Copy.t10,
-                          selected: _durationText == Copy.t10,
-                          onTap: () => setState(() => _durationText = Copy.t10),
-                        ),
-                        _DurationChoice(
-                          text: Copy.t30,
-                          selected: _durationText == Copy.t30,
-                          onTap: () => setState(() => _durationText = Copy.t30),
-                        ),
-                        _DurationChoice(
-                          text: Copy.t60,
-                          selected: _durationText == Copy.t60,
-                          onTap: () => setState(() => _durationText = Copy.t60),
-                        ),
-                        _DurationChoice(
-                          text: Copy.hard,
-                          selected: _durationText == Copy.hard,
-                          onTap: () => setState(() => _durationText = Copy.hard),
-                        ),
-                      ],
-                    ),
+                    Text('진행중: ${c.isActive.value ? "YES" : "NO"}',
+                        style: const TextStyle(color: _text, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text('시작일: ${c.startDate.value?.toIso8601String().split("T").first ?? "-"}',
+                        style: const TextStyle(color: _text)),
+                    const SizedBox(height: 4),
+                    Text('성공 횟수: ${c.successDates.length}', style: const TextStyle(color: _text)),
+                    const SizedBox(height: 4),
+                    Text('실패 횟수: ${c.failCount.value}', style: const TextStyle(color: _text)),
                   ],
                 ),
-              ),
+              );
+            }),
 
-              const Spacer(),
+            const SizedBox(height: 16),
 
-              // 시작하기 버튼(젤리 바운스)
-              JellyTap(
-                onTap: _start,
-                child: Container(
-                  height: 56,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: SpecConst.primary,
-                    borderRadius: BorderRadius.circular(SpecConst.radius),
-                    border: Border.all(color: Colors.black.withOpacity(0.10)),
-                  ),
-                  child: Text(
-                    Copy.start,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
+            // 시작하기
+            _JellyButton(
+              text: '시작하기',
+              onTap: () async {
+                await c.startChallenge();
+                Get.snackbar('OK', '챌린지 시작!');
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // 오늘 성공
+            _JellyButton(
+              text: '오늘 성공',
+              onTap: () async {
+                final ok = await c.checkTodaySuccess();
+                Get.snackbar('결과', ok ? '오늘 성공 체크 ✅' : '이미 체크했거나 아직 시작 안 함 ❌');
+              },
+            ),
+            if (kDebugMode) ...[
+  const SizedBox(height: 10),
+  _JellyButton(
+    text: '초기화(리셋)',
+    isDanger: true,
+    onTap: () async {
+      await c.resetAll();
+      Get.snackbar('OK', '초기화 완료');
+    },
+  ),
+],
+
+            const Spacer(),
+
+            _RoundCard(
+              child: const Text(
+                '※ 지금은 “기능 MVP” 상태야.\n'
+                'UI는 동글동글 + 젤리탭으로 느낌만 살려두고,\n'
+                '다음 단계에서 s2/s3 플로우로 확장하자.',
+                style: TextStyle(color: _text, height: 1.25),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
-  const _Chip({required this.text, required this.onTap});
+class _RoundCard extends StatelessWidget {
+  final Widget child;
+  const _RoundCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return JellyTap(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.black.withOpacity(0.08)),
-        ),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black.withOpacity(0.12)),
       ),
+      child: child,
     );
   }
 }
 
-class _DurationChoice extends StatelessWidget {
+class _JellyButton extends StatelessWidget {
   final String text;
-  final bool selected;
-  final VoidCallback onTap;
+  final Future<void> Function() onTap;
+  final bool isDanger;
 
-  const _DurationChoice({
+  const _JellyButton({
     required this.text,
-    required this.selected,
     required this.onTap,
+    this.isDanger = false,
   });
 
+  static const _primary = Color(0xFFFCE205);
+  static const _text = Color(0xFF333333);
+
   @override
   Widget build(BuildContext context) {
+    final bg = isDanger ? Colors.white : _primary;
+    final border = isDanger ? Colors.black.withOpacity(0.2) : Colors.transparent;
+
     return JellyTap(
-      onTap: onTap,
+      onTap: () async => onTap(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: selected ? SpecConst.primary.withOpacity(0.6) : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.black.withOpacity(0.10)),
+          color: bg,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: border),
         ),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: _text,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }

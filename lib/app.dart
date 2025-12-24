@@ -12,7 +12,7 @@ class Just3DaysApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(),
       onGenerateRoute: AppRouter.onGenerateRoute,
-      initialRoute: AppRouter.s1,
+       initialRoute: AppRouter.splash,
     );
   }
 }
